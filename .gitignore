@@ -1,0 +1,5 @@
+node_modules
+config.yaml
+*.log
+dbConf.coffee
+dbTest.*
