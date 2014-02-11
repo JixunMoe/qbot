@@ -29,7 +29,7 @@ class QQBot
         api.get_qnum_by_id UIN, type, @auth, (data)->
             # console.log that.qNumCache, data
             if data.result
-              cb(that.qNumCache[UIN] = data.result.account)
+              cb(that.qNumCache[UIN] = data.result.account.toString())
             else
               cb('[错误]')
         
@@ -214,9 +214,9 @@ class QQBot
         try
           if msg.type == 'group'
             update_group_member msg.from_group unless msg.from_user  #更新新用户
-            log.debug "[群消息]","[#{msg.from_group.name}] #{msg.from_user.nick}:#{msg.content} #{msg.time}"
+            log.debug "[群消息]","[#{msg.from_group.name}] #{msg.from_user.nick}:#{msg.content}"
           else if msg.type == 'buddy'
-            log.debug "[好友消息]","#{msg.from_user.nick}:#{msg.content} #{msg.time}"
+            log.debug "[好友消息]","#{msg.from_user.nick}:#{msg.content}"
         catch error
           log.error "on_message #{error}"
           log.debug "on_message #{msg}"

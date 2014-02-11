@@ -55,7 +55,7 @@ parseCommand = (inputCommand)->
         if (cCode = inputCommand.charCodeAt(i)) is 32 #空格
             if inQuote
                 addStr = true
-            else if lastChr isnt chr
+            else if lastChr != chr && ret[ret.length - 1]
                 ret.push ""
                 curId++
         else if cCode is 34 # 引号
@@ -74,8 +74,14 @@ parseCommand = (inputCommand)->
     return rret;
 
 # 初始化
-core.init db, dbConf, start_at
+doServerReload = () ->
+    console.log 'doServerReload: 重载核心插件'
+    foo = {c: core}
+    delete foo.c
+    core = reloadModule './main.core'
+    core.init db, dbConf, start_at, doServerReload
 
+core.init db, dbConf, start_at, doServerReload
 ###
  @param content 消息内容
  @param send(content)  回复消息
@@ -90,16 +96,13 @@ module.exports = (contentInput, send, robot, msg)->
 
     # Get commands
     parsedCommand = parseCommand content;
-    console.log 'Recv. Command: ', parsedCommand
-    if parsedCommand.command == 'reload'
-        foo = {c: core}
-        delete foo.c
-        core = reloadModule './main.core'
-        core.init db, dbConf, start_at
-        send '重载完毕, 程序继续~ :3'
-        return
+    # console.log 'Recv. Command: ', parsedCommand
+    isOp = dbConf.defAdmin.indexOf(msg.qnum) != -1;
 
     core.commandList.forEach (e) ->
         if -1 != e.name.indexOf (parsedCommand.command)
             console.log '[函数匹配][%s]: %s', e.name, parsedCommand.command
-            e.cb parsedCommand.args, parsedCommand.command, send, msg
+            try
+                e.cb parsedCommand.args, parsedCommand.command, send, msg, isOp
+            catch err
+                send '梦姬执行遇到错误, 请等主人上线后报告 >//<\n' + err.message + '\n' + err.stack

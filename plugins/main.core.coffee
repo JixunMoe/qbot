@@ -4,12 +4,15 @@ defConf = {}
 http = require 'http'
 https = require 'https'
 util = require 'util'
+mathjs = require 'mathjs'
 sprintf = util.format
 start_at = 0
 
 
 # Null Function
 nullFunc = -> ;
+
+doServerReload = nullFunc;
 
 # 进行编码…
 doEscape = (strIn) ->
@@ -25,20 +28,21 @@ trimText = (inputText) ->
 # 添加用户
 addUser = (uid, cb = nullFunc) ->
     db.query sprintf('insert ignore into `qbot` (`qNum`, `dMoneyLeft`) values (%s, %s)',
-        doEscape(uid), db.escape(defConf.money)), cb
+        doEscape(uid), doEscape(defConf.money)), cb
 
 # 如果减的话把 money 设为负值即可 :3
 addMoney = (uid, money, cb = nullFunc) ->
     db.query sprintf('update `qbot` set `dMoneyLeft` = `dMoneyLeft` +%s where `qNum` like "%s"',
-        db.escape(money), doEscape(uid)), cb
+        doEscape(money), doEscape(uid)), cb
 
 # 获取用户信息
 getUserInfo = (uid, cb = nullFunc) ->
     db.query sprintf('select * from `qbot` where `qNum`="%s" limit 1', doEscape(uid)), cb
 
 # 抢钱函数
-doRobMoney = (uid, target, cb = nullFunc) ->
-    moneyRobbed = (Math.random() * 50 - 30).toFixed(2)
+# doRobMoney msg.qnum, tg, forceOther, (moneyRobbed) ->
+doRobMoney = (uid, target, forceOther, cb = nullFunc) ->
+    moneyRobbed = (Math.random() * 50 - (if forceOther then 60 else 30)).toFixed(2)
     uid = trimText(uid)
     target = trimText(target)
     if uid is target
@@ -70,7 +74,7 @@ update `qbot` set
 where `qnum` like @qNum;
 
 select @lastSign;
-''', db.escape(uid)), cb
+''', doEscape(uid)), cb
 
 
 padZero = (str) ->
@@ -122,18 +126,18 @@ doParseGalacg = (strIn) ->
           l: b # Link
 
 doGalAcgReadCache = (targetNum = 3) ->
-  genPool = []
-  ret = []
+    genPool = []
+    ret = []
 
-  i = 0
-  genPool.push i  while i++ < galAcgCache.length
+    i = 0
+    genPool.push i  while i++ < galAcgCache.length
 
-  i = 0
-  while i++ < targetNum
-    ranNum = Math.floor(Math.random() * (genPool.length - 1))
-    ret.push galAcgCache[genPool[ranNum]].t + ':\n' + galAcgCache[genPool[ranNum]].l
-    genPool.splice ranNum, 1
-  '随机抽取的一些资源:\n\n' + (ret.join '\n\n') + '\n\n以上资源由《绅士仓库》友情提供.'
+    i = 0
+    while i++ < targetNum
+        ranNum = Math.floor(Math.random() * (genPool.length - 1))
+        ret.push galAcgCache[genPool[ranNum]].t + ':\n - ' + galAcgCache[genPool[ranNum]].l
+        genPool.splice ranNum, 1
+    return (ret.join '\n') + '\n\n以上资源由《绅士仓库》友情提供.'
 
 parseJSON = (input) ->
     if(/^[\],:{}\s]*$/.test(input.replace(/\\["\\\/bfnrtu]/g, '@')\
@@ -143,8 +147,11 @@ parseJSON = (input) ->
     return 0
 
 padRight = (inputStr, targetNum) ->
-    while inputStr.length < targetNum
-        inputStr += ' '
+    tgtLen = inputStr.length + (inputStr.match(/[^\x00-\xff]/g)||[]).length
+    while tgtLen < targetNum
+        inputStr += '　'
+        tgtLen+=2
+    inputStr+=' '  if tgtLen & 1
     inputStr
 
 commandList = []
@@ -154,7 +161,7 @@ regCommand = (sNames, sDesc, callback) ->
         desc: sDesc
         cb: callback
 
-regCommand ['资源', '仓库'], '查询仓库资源', (args, cmd, send, msg) ->
+regCommand ['资源', '仓库', 'ck', 'zy'], '查询仓库资源', (args, cmd, send, msg) ->
     if galAcgCache.length
         return send doGalAcgReadCache()
     # 抓取缓存
@@ -164,13 +171,12 @@ regCommand ['资源', '仓库'], '查询仓库资源', (args, cmd, send, msg) ->
 
 regCommand ['time', '时间', '报时'], '查询系统时间; 参数1 可为时差[整数型]', (args, cmd, send, msg) ->
     timeObj = new Date();
-    tz = (if args.length then \
-        parseInt((args[0].match(/-?\d+/)||[0])[0]) - timeObj.getTimezoneOffset() else 0);
-    newHour = timeObj.getHours() + tz;
-    while newHour < 0
-        newHour += 24;
+    args.push ''
+    tz = parseInt((args[0].match(/-?\d+/)||[0])[0]);
+    newHour = timeObj.getHours() + tz - timeObj.getTimezoneOffset();
+    newHour += 24  while newHour < 0
     # Send time
-    send (if tz then 'UTC ' + (if tz > 0 then '+' else '-') + padZero(Math.abs(tz)) + ' 时间: ' else '') + padZero(newHour % 24)\
+    send 'UTC ' + (if tz >= 0 then '+' else '-') + padZero(Math.abs(tz)) + ' 时间: ' + padZero(newHour % 24)\
         + ':' + padZero(timeObj.getMinutes()) + ':' + padZero(timeObj.getSeconds())
 
 regCommand ['sign', '签到'], '执行当天的签到, 重复签到将受惩罚~', (args, cmd, send, msg) ->
@@ -182,22 +188,46 @@ regCommand ['sign', '签到'], '执行当天的签到, 重复签到将受惩罚~
         doSignin msg.qnum, (err, result)->
             # Sign
             # console.log result[2][0]['@lastSign'], typeof result[2][0]['@lastSign']
+            return send '抱歉, 系统错误 :/\n' + err  if err
             strLastSign = result[2][0]['@lastSign']
             lastTimeSign = new Date(strLastSign ||  0)
-            if timeNow - lastTimeSign < 24*60*60*1000
+            # 改成 16 小时
+            if timeNow - lastTimeSign < 16*60*60*1000
                 # 24 小时内签到 :/
                 return send msg.from_user.nick + '已在 ' + strLastSign\
-                    + ' 签到过了.\n作为惩罚, 接下来的 24 小时您将无法签到.'
+                    + ' 签到过了.\n作为惩罚, 接下来的 16 小时内您将无法签到.'
             # 加钱
             ranMoneyTop = Math.random() * defConf.signMaxMoney
-            send '签到成功! ' + msg.from_user.nick + ' 获得 $' + ranMoneyTop.toFixed (2)
+            send '签到成功! [' + msg.from_user.nick + '] 获得 $' + ranMoneyTop.toFixed (2)
             addMoney msg.qnum, ranMoneyTop
 
-regCommand ['提现'], '嘛嘛~~', (args, cmd, send, msg) ->
+###
+regCommand ['提现', 'alipay', '折现'], '嘛嘛~~', (args, cmd, send, msg) ->
     # 目标 ID
     # console.log JSON.stringify(msg)
     addMoney msg.qnum, -10
     send '成功提现 $10 到 Jixun 的账号 :3'
+###
+
+bodyPos = [ '手掌', '双脚', '熊脸', 
+            '脸蛋', '鼻子', '小嘴', 
+            '大○ [警×蜀黍就是他!!]', 
+            '大× [不忍直视]', '双眼', 
+            '脖子', '胸口', '大腿', '脚踝',
+            '那里 >////<', '腋下', '耳朵',
+            '小腿', '袜子', '臭脚' ]
+regCommand ['prpr', '舔舔'], '赛高!', (args, cmd, send, msg) ->
+    if args.length > 0
+        send sprintf '%s 舔了舔 %s 的 %s... 我好兴奋啊!', msg.from_user.nick,\
+            args[0].replace(/\s+/g, ' '),\
+            (if args.length > 1 && args[1] && args[1] != '>' \
+                then args[1] else bodyPos[Math.floor(Math.random() * bodyPos.length)])
+
+burnEqup = ['汽油', '火把']
+regCommand ['烧', '烧烧', '烧烧烧', 'fff'], '火把在哪!', (args, cmd, send, msg) ->
+    if args.length > 0
+        send sprintf '快烧掉 %s, 壮哉我大 FFF!\n看, 我手上突然出现了%s! 这可是火之神的旨意!',\
+            args.join('、'), burnEqup[Math.floor(Math.random() * burnEqup.length)]
 
 regCommand ['rob', '抢钱'], '抢别人的钱 :3', (args, cmd, send, msg) ->
     # 目标 ID
@@ -210,10 +240,14 @@ regCommand ['rob', '抢钱'], '抢别人的钱 :3', (args, cmd, send, msg) ->
             addUser msg.qnum
         tg = trimText(args[0]);
         getUserInfo tg, (err, result)->
-            console.log err, result
+            pre = ''
+            forceOther = false
             if !result.length
                 return send '用户未注册或未在此开户 :3'
-            doRobMoney msg.qnum, tg, (moneyRobbed) ->
+            if result[0]['dMoneyLeft'] < 0
+                pre = sprintf '%s 已经没钱了, 因此 ', tg
+                forceOther = true
+            doRobMoney msg.qnum, tg, forceOther, (moneyRobbed) ->
                 # rows[2][0]['@qNum']
                 # rows[2][0]['@moneyBefore']
                 send tg +  (if moneyRobbed > 0 then '被' else '反从 ')\
@@ -227,7 +261,7 @@ regCommand ['money', 'balance', '余额'], '查询当前账号的余额', (args,
         # console.log rows[0]['dMoneyLeft']
         send msg.from_user.nick + ' 尚有 $' + rows[0]['dMoneyLeft'] + ', 请继续履行救世主的责任.'
 
-regCommand ['pay', '支付', '转账'], '<目标号码> <转账金额>', (args, cmd, send, msg) ->
+regCommand ['pay'], '<目标号码> <数量>', (args, cmd, send, msg) ->
     if args.length < 2
         return
 
@@ -239,13 +273,13 @@ regCommand ['pay', '支付', '转账'], '<目标号码> <转账金额>', (args, 
         if !rows.length
             return
         if rows[0]['dMoneyLeft'] < targetMoney
-            return send sprintf '%s: 很抱歉, 余额不足, 转账失败 :(', msg.from_user.nick
+            return send sprintf '%s: 很抱歉, 余-额不足, 转-账失败 :(', msg.from_user.nick
         getUserInfo targetQNum, (err, rows)->
             if !rows.length
-                return send sprintf '%s: 转账目标[%s]不存在 :(', msg.from_user.nick, targetQNum
+                return send sprintf '%s: 转-账目标[%s]不存在 :(', msg.from_user.nick, targetQNum
             addMoney msg.qnum, -targetMoney
             addMoney targetQNum, targetMoney
-            send sprintf '%s 成功转账 %s 给 [%s]', msg.from_user.nick, targetMoney, targetQNum
+            send sprintf '%s 成功转-账 %s 给 [%s]', msg.from_user.nick, targetMoney, targetQNum
 
 regCommand ['uptime', '运行时长'], '查询计算姬的运行时长', (args, cmd, send, msg) ->
     secs = (new Date().getTime() - start_at) / 1000
@@ -261,8 +295,8 @@ regCommand ['roll', '摇点'], '摇点 0~100', (args, cmd, send, msg) ->
                 else 0 )) + \
         ' 点';
 
-regCommand ['hitokoto', '一句话', '来一句'], '从 [hitokoto.us] 随机抽取一句话', (args, cmd, send, msg) ->
-    doHttpGet 'https://api.hitokoto.us/rand', (str) ->
+regCommand ['hito', '一句话', '来一句'], '从 [hitokoto.us] 随机抽取一句话', (args, cmd, send, msg) ->
+    doHttpGet 'http://api.hitokoto.us/rand', (str) ->
         s = parseJSON str
         if s != 0
             send s.hitokoto + '\n　　—— ' + s.source||s.author
@@ -295,32 +329,102 @@ regCommand ['ostats'], '<用户名> [模式: 0/1/2/3] 查询某个用户的 osu 
                 s[0].ranked_score.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","), s[0].pp_rank,
                 s[0].playcount, parseInt(s[0].level), parseFloat(s[0].accuracy).toFixed(2);
 
+regCommand ['晚安', 'gn'], '晚安~', (args, cmd, send, msg) ->
+    send '晚安, ' + (if args.length > 0 then args[0] else msg.from_user.nick) + '~'
 
+regCommand ['欢迎'], '<新人昵称> 新人进群时用~~', (args, cmd, send, msg) ->
+    if args.length > 0
+        send '欢迎新人 [' + args[0] + '] ~\n新人新年好, 红包果照都拿来吧 owo'
+
+regCommand ['reload', '重载'], '重载服务器 *', (args, cmd, send, msg, isOp) ->
+    if isOp
+        doServerReload()
+        send '[系统] [' + msg.from_user.nick + '] 插件重载完毕~ :3'
+        return
+    console.log '%s 的权限不足 :/', msg.from_user.nick
+
+rmSign = (num) ->
+    Math.abs(num) || ''
+
+getSign = (num) ->
+    return (if num.toString().slice(0,1) == '-' then '-' else '+')
+
+regCommand ['math', 'maths', '数学'], '显示该信息 :3', (args, cmd, send, msg) ->
+    if args.length < 2
+        return
+    mathFunc = args[0]
+    i = 0
+    switch args.shift()
+        when "quad"
+            if args.length < 3
+                return
+            # Solve
+            args[i] = parseInt(args[i++])  while i < 3
+            # (-b +/- sqrt(b^2 - 4ac))/2
+            det = args[1] * args[1] - 4 * args[0] * args[2]
+            qsol = ''
+            if det < 0
+                # Imaginary number, i
+                left = args[1] / args[0] / -2
+                right = Math.sqrt(det * -1) / args[0] / 2
+                qsol = left.toFixed(3) + '\xB1' + right.toFixed(3) + 'i'
+            else if det == 0
+                # 1 Solution
+                qsol = (-1 * args[1] / args[0] / 22).toFixed(3)
+            else
+                # 2 Solutions
+                det = Math.sqrt(det)
+                qsol = [((-1 * args[1] + det) / args[0] / 2).toFixed(3),
+                        ((-1 * args[1] - det) / args[0] / 2).toFixed(3)].join ('、')
+            send sprintf '%sx\xB2^2 %s %sx %s %s 的结果: %s',
+                args[0], getSign(args[1]), rmSign(args[1]), getSign(args[2]), rmSign(args[2]), qsol
+        when 'eval'
+            if args.length < 1
+                return
+            evalCommand = trimText (args.join ' ').replace(/\s+/g,' ')
+            if evalCommand.length > 100
+                return send sprintf '[%s]: 很抱歉, 您输入的指令太长了 :/'
+            try
+                send sprintf '[%s]: 运算结果为: %s', msg.from_user.nick, mathjs().eval(evalCommand)
+            catch err
+                console.log 'Exp. error: %s', evalCommand
+                send sprintf '[%s]: 运算表达式错误 :/', msg.from_user.nick
+
+helpList = []
+helpTotal = 0
 regCommand ['help', '帮助', '功能'], '显示该信息 :3', (args, cmd, send, msg) ->
     # console.log arguments
-    send HELP_INFO
+    args.push ''
+    page = parseInt((args[0].match(/\d+/)||[1])[0])
+    if page > helpTotal
+        return send sprintf '页码 %s 超出帮助范围 :/', page
+    stRow = 5 * (page - 1)
+    send sprintf '''
+        帮助 - Coffee.Bot 二次开发 By Jixun.Moe
+        %s
+        第 %s 页, 共 %s 页;%s
+    ''', helpList.slice(stRow, stRow + 5).join('\n'), page, helpTotal,
+         (if page is helpTotal then '' else sprintf ' 输入 !%s %s 查看下一页', cmd, page + 1)
 
 VERSION_INFO = """
-v1.3 qqbot
+v1.3.1 Coffee Bot
 二次开发: Jixun
 """
 
-HELP_INFO = (() ->
-    hi = ["帮助 - QBot 二次开发 By Jixun.Moe"]
-    commandList.forEach (e) ->
-        hi.push padRight('!' + e.name.join("/"), 22 ) + ' ' + e.desc
-    hi.join "\n"
-)()
-
 regCommand ['about', 'version', '关于', '版本'], '查询机器人版本', (args, cmd, send, msg) ->
     send VERSION_INFO
+
+commandList.forEach (e) ->
+    helpList.push padRight('!' + e.name.join("/"), 22 ) + ' ' + e.desc
+helpTotal = Math.ceil(helpList.length / 5)
 
 module.exports = 
     commandList: commandList
     setDef: (def) ->
         defConf = def
-    init: (db_, dbConf_, beginTime) ->
+    init: (db_, dbConf_, beginTime, doServerReload_) ->
         db = db_
         dbConf = dbConf_
         defConf = dbConf.defConf
         start_at = beginTime
+        doServerReload = doServerReload_
