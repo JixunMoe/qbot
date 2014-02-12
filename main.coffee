@@ -13,7 +13,8 @@ api       = require "./src/qqapi"
 apiserver = require "./src/apiserver"
 QQBot     = require "./src/qqbot"
 defaults  = require './src/defaults'
-config    = require './config'
+conf      = require './config'
+config    = conf.conf
 
 KEY_COOKIES = 'qq-cookies'
 KEY_AUTH    = 'qq-auth'

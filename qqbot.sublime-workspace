@@ -87,7 +87,47 @@
 			"file": "plugins/help.coffee",
 			"settings":
 			{
-				"buffer_size": 2889,
+				"buffer_size": 3039,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "plugins/dbConf-sample.coffee",
+			"settings":
+			{
+				"buffer_size": 317,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "plugins/dbConf.coffee",
+			"settings":
+			{
+				"buffer_size": 320,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "config.coffee",
+			"settings":
+			{
+				"buffer_size": 127,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "config.yaml",
+			"settings":
+			{
+				"buffer_size": 245,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "config.demo.yaml",
+			"settings":
+			{
+				"buffer_size": 264,
 				"line_ending": "Windows"
 			}
 		},
@@ -95,7 +135,7 @@
 			"file": "plugins/main.core.coffee",
 			"settings":
 			{
-				"buffer_size": 13926,
+				"buffer_size": 14540,
 				"line_ending": "Windows"
 			}
 		},
@@ -164,6 +204,7 @@
 	},
 	"file_history":
 	[
+		"/C/Users/Jixun/Documents/GitHub/qqbot/config.yaml",
 		"/C/Users/Jixun/Documents/GitHub/qqbot/plugins/dbConf.coffee",
 		"/C/Users/Jixun/Documents/GitHub/qqbot/package.json",
 		"/C/Users/Jixun/Documents/GitHub/qqbot/README.md",
@@ -178,7 +219,6 @@
 		"/C/Users/Jixun/Desktop/http/main.js",
 		"/C/Users/Jixun/Documents/GitHub/qqbot/node_modules/log/lib/log.js",
 		"/C/Users/Jixun/Documents/GitHub/qqbot/dbTest.njs",
-		"/C/Users/Jixun/Documents/GitHub/qqbot/config.yaml",
 		"/C/Users/Jixun/AppData/Roaming/Sublime Text 3/Packages/Better CoffeeScript/Keymaps/Default (Windows).sublime-keymap",
 		"/C/Users/Jixun/Documents/GitHub/qqbot/main.coffee",
 		"/C/Users/Jixun/AppData/Roaming/Sublime Text 3/Packages/Better CoffeeScript/CoffeeScript.sublime-settings",
@@ -207,6 +247,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"parseCommand",
 			"pad",
 			"NSimSun",
 			"padRight",
@@ -304,7 +345,7 @@
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 0,
 			"sheets":
 			[
 				{
@@ -313,15 +354,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2889,
+						"buffer_size": 3039,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1066,
-								1066
+								3032,
+								3032
 							]
 						],
 						"settings":
@@ -331,27 +372,170 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 599.0,
+						"translation.y": 1273.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "plugins/main.core.coffee",
+					"file": "plugins/dbConf-sample.coffee",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 13926,
+						"buffer_size": 317,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								4581,
-								4581
+								17,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Better CoffeeScript/CoffeeScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "plugins/dbConf.coffee",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 320,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								320,
+								320
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Better CoffeeScript/CoffeeScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": -0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "config.coffee",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 127,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								127,
+								127
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Better CoffeeScript/CoffeeScript.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "config.yaml",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 245,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								235,
+								235
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/YAML/YAML.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "config.demo.yaml",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 264,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								264,
+								264
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/YAML/YAML.tmLanguage",
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "plugins/main.core.coffee",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 14540,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								14540,
+								14540
 							]
 						],
 						"settings":
@@ -362,14 +546,14 @@
 							"word_wrap": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 2095.0,
+						"translation.y": 6169.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 6,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
+					"buffer": 7,
 					"file": "src/qqbot.coffee",
 					"semi_transient": false,
 					"settings":
@@ -381,8 +565,8 @@
 						"selection":
 						[
 							[
-								4756,
-								4756
+								4436,
+								4443
 							]
 						],
 						"settings":
@@ -392,14 +576,14 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1395.0,
+						"translation.y": 1849.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 7,
 					"type": "text"
 				},
 				{
-					"buffer": 3,
+					"buffer": 8,
 					"file": ".gitignore",
 					"semi_transient": false,
 					"settings":
@@ -423,11 +607,11 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 4,
+					"stack_index": 9,
 					"type": "text"
 				},
 				{
-					"buffer": 4,
+					"buffer": 9,
 					"file": "src/qqapi.coffee",
 					"semi_transient": false,
 					"settings":
@@ -453,11 +637,11 @@
 						"translation.y": 1625.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 8,
 					"type": "text"
 				},
 				{
-					"buffer": 5,
+					"buffer": 10,
 					"file": "/C/Users/Jixun/Desktop/http/core.js",
 					"semi_transient": false,
 					"settings":
@@ -482,7 +666,7 @@
 						"translation.y": 396.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 5,
+					"stack_index": 10,
 					"type": "text"
 				}
 			]

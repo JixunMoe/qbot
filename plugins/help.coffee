@@ -3,8 +3,11 @@ HELP_INFO = ""
 fs = require 'fs'
 Path = require 'path'
 dbConf = require './dbConf'
+util = require 'util'
+sprintf = util.format
 mysql = require 'mysql2'
 core = require './main.core'
+conf = require '../config'
 #file_path = Path.join __dirname, "..", "package.json"
 #bundle = JSON.parse( fs.readFileSync file_path )
 ###################################
@@ -21,7 +24,7 @@ db.connect()
 console.log 'Unable connect to database :/'  if not db
 
 console.log "Init database..."
-db.query '''
+db.query sprintf('''
     create database if not exists `jixun`;
     use `jixun`;
     create table if not exists `qbot` (
@@ -29,8 +32,8 @@ db.query '''
         `tLastSign` TIMESTAMP NULL,
         `dMoneyLeft` FLOAT NULL,
         UNIQUE INDEX `qNum_UNIQUE` (`qNum` ASC)
-    )ENGINE = InnoDB;
-''', (err) ->
+    )ENGINE = %s;
+''', dbConf.sqlEngine), (err) ->
     throw new Error(err)  if err
     # Done;
 
@@ -90,6 +93,9 @@ core.init db, dbConf, start_at, doServerReload
 ###
 
 module.exports = (contentInput, send, robot, msg)->
+    if conf.conf.ban && -1 != conf.conf.ban.indexOf msg.qnum
+        console.log '黑名单用户 [%s] 发言, 已过滤.', msg.qnum
+        return
     content = trimText (contentInput);
     if (!/^(\/|!)/.test(content))
         return; # Not Command
@@ -100,9 +106,10 @@ module.exports = (contentInput, send, robot, msg)->
     isOp = dbConf.defAdmin.indexOf(msg.qnum) != -1;
 
     core.commandList.forEach (e) ->
-        if -1 != e.name.indexOf (parsedCommand.command)
+        if -1 != e.name.indexOf parsedCommand.command
             console.log '[函数匹配][%s]: %s', e.name, parsedCommand.command
             try
                 e.cb parsedCommand.args, parsedCommand.command, send, msg, isOp
             catch err
-                send '梦姬执行遇到错误, 请等主人上线后报告 >//<\n' + err.message + '\n' + err.stack
+                console.log err.message + '\n' + err.stack
+                send '梦姬执行遇到错误并记录, 请等主人上线后报告 >//<'

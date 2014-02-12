@@ -1,18 +1,22 @@
 # rename this file to config.yaml before start
+# 使用前请将该文档更名为 config.yaml
+
 # qqbot帐号
-account:  2769546520
+account:  2794263266
 password: 
 
 # 验证码图片
 port: 3100
 host: localhost
 
-
 # 插件列表
 plugins:
     - help
-    - debug
 
 # 激活api服务
 api-port:  3000
 api-token: ''
+
+# 封禁账号列表; 可通过聊天指令操作
+ban:
+	- "123456"

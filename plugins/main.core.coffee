@@ -7,6 +7,9 @@ util = require 'util'
 mathjs = require 'mathjs'
 sprintf = util.format
 start_at = 0
+conf = require '../config'
+if !conf.conf.ban
+    conf.conf.ban = [];
 
 
 # Null Function
@@ -294,13 +297,13 @@ regCommand ['roll', '摇点'], '摇点 0~100', (args, cmd, send, msg) ->
             ( if args.length then (parseInt(args[0]) or 0)\
                 else 0 )) + \
         ' 点';
-
+###
 regCommand ['hito', '一句话', '来一句'], '从 [hitokoto.us] 随机抽取一句话', (args, cmd, send, msg) ->
     doHttpGet 'http://api.hitokoto.us/rand', (str) ->
         s = parseJSON str
         if s != 0
             send s.hitokoto + '\n　　—— ' + s.source||s.author
-
+###
 regCommand ['ping'], 'pong!', (args, cmd, send, msg) ->
     # console.log arguments
     send 'pong!'
@@ -336,12 +339,60 @@ regCommand ['欢迎'], '<新人昵称> 新人进群时用~~', (args, cmd, send, 
     if args.length > 0
         send '欢迎新人 [' + args[0] + '] ~\n新人新年好, 红包果照都拿来吧 owo'
 
-regCommand ['reload', '重载'], '重载服务器 *', (args, cmd, send, msg, isOp) ->
+regCommand ['save'], '储存设定, 用户操作后必须 *', (args, cmd, send, msg, isOp) ->
+    if !isOp
+        console.log '/save 指令: %s 的权限不足 :/', msg.from_user.nick
+        return
+    conf.save conf.conf
+    send sprintf '[%s] 设定储存完毕 owo', msg.from_user.nick
+
+filterNum = (inp) -> (inp.match(/\d+/)||[0])[0]
+
+regCommand ['ban'], '封锁 *', (args, cmd, send, msg, isOp) ->
+    if !isOp || args.length < 1
+        console.log '/ban 指令: %s 的权限不足 :/', msg.from_user.nick
+        return
+    i = 0; n = '';
+    while i<args.length
+        if (k = filterNum(args[i])) && -1 == conf.conf.ban.indexOf k
+            conf.conf.ban.push k
+        i++
+    # conf.save conf.conf
+    send sprintf '[%s] 封禁完毕: %s', msg.from_user.nick, args.join('、')
+
+regCommand ['banlist'], '查询封锁 *', (args, cmd, send, msg, isOp) ->
+    if !isOp
+        console.log '/banlist 指令: %s 的权限不足 :/', msg.from_user.nick
+        return
+    send sprintf '[%s] 封锁名单: %s', msg.from_user.nick, conf.conf.ban.join('、')
+
+cleanArray = (inputArr) ->
+    ret = []
+    inputArr.forEach (e) ->
+        ret.push e  if e
+    ret
+
+regCommand ['unban'], '取消封锁 *', (args, cmd, send, msg, isOp) ->
+    if !isOp || args.length < 1
+        console.log '/unban 指令: %s 的权限不足 :/', msg.from_user.nick
+        return
+    i = 0; j = 0; k = '';
+    newBanList = []
+    while i<args.length
+        # 如果黑名单存在, 移除
+        if (k = filterNum(args[i])) && -1 != j = conf.conf.ban.indexOf k
+            delete conf.conf.ban[j]
+        i++
+    conf.conf.ban = cleanArray conf.conf.ban
+    send sprintf '[%s] 解封完毕: %s', msg.from_user.nick, args.join('、')
+
+regCommand ['reload'], '重载服务器 *', (args, cmd, send, msg, isOp) ->
     if isOp
+        conf.reload()
         doServerReload()
         send '[系统] [' + msg.from_user.nick + '] 插件重载完毕~ :3'
         return
-    console.log '%s 的权限不足 :/', msg.from_user.nick
+    console.log '/reload 指令: %s 的权限不足 :/', msg.from_user.nick
 
 rmSign = (num) ->
     Math.abs(num) || ''
@@ -383,7 +434,7 @@ regCommand ['math', 'maths', '数学'], '显示该信息 :3', (args, cmd, send, 
                 return
             evalCommand = trimText (args.join ' ').replace(/\s+/g,' ')
             if evalCommand.length > 100
-                return send sprintf '[%s]: 很抱歉, 您输入的指令太长了 :/'
+                return send sprintf '[%s]: 很抱歉, 您输入的指令太长了 :/', msg.from_user.nick
             try
                 send sprintf '[%s]: 运算结果为: %s', msg.from_user.nick, mathjs().eval(evalCommand)
             catch err

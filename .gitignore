@@ -3,3 +3,4 @@ config.yaml
 *.log
 dbConf.coffee
 dbTest.*
+tmp
