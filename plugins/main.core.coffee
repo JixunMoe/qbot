@@ -10,7 +10,10 @@ start_at = 0
 conf = require '../config'
 if !conf.conf.ban
     conf.conf.ban = [];
-
+osuRooms = []
+# Creator
+# Room name
+# Password
 
 # Null Function
 nullFunc = -> ;
@@ -120,6 +123,9 @@ doHttpGet = (url, callback) ->
         http_res.on "end", ->
             # you can use res.send instead of console.log to output via express
             callback data
+    .on 'error', (e) ->
+      console.log("HTTP(s) ERROR: " + e.message);
+    
 galAcgCache = []
 doParseGalacg = (strIn) ->
     galAcgCache = []
@@ -195,10 +201,11 @@ regCommand ['sign', '签到'], '执行当天的签到, 重复签到将受惩罚~
             strLastSign = result[2][0]['@lastSign']
             lastTimeSign = new Date(strLastSign ||  0)
             # 改成 16 小时
-            if timeNow - lastTimeSign < 16*60*60*1000
+            if timeNow - lastTimeSign < 16*60*60*1000 and lastTimeSign.getDate() == timeNow.getDate()
                 # 24 小时内签到 :/
                 return send msg.from_user.nick + '已在 ' + strLastSign\
-                    + ' 签到过了.\n作为惩罚, 接下来的 16 小时内您将无法签到.'
+                    + ' 签到过了.\n作为惩罚… 我还没想好 ;w;'
+                # 检查是否为同一日
             # 加钱
             ranMoneyTop = Math.random() * defConf.signMaxMoney
             send '签到成功! [' + msg.from_user.nick + '] 获得 $' + ranMoneyTop.toFixed (2)
@@ -212,9 +219,61 @@ regCommand ['提现', 'alipay', '折现'], '嘛嘛~~', (args, cmd, send, msg) ->
     send '成功提现 $10 到 Jixun 的账号 :3'
 ###
 
+regCommand ['淦'], '淦!', (args, cmd, send, msg) ->
+    send sprintf '%s 语录: 我好无聊好想被%s淦', msg.from_user.nick, (if args.length then ' [ ' + args.join('、') + ' ] ' else '')
+
+regCommand ['room'], '[reg/rm] <房名> [密码]', (args, cmd, send, msg, isOp) ->
+    roomStr = ''
+    if args < 2
+        # 查房
+        if osuRooms.length == 0
+            # 无房
+            return send sprintf '[%s] 目前还没人开房 :/  使用 !room reg <房名> [密码] 登陆房间吧~', msg.from_user.nick
+        osuRooms.forEach (e) ->
+            # Loop rooms
+            roomStr += e.Creator + ' 登记的游戏; 房名: ' + e.Name
+            if (e.Password)
+                roomStr += '\n密码: ' + e.Password
+            else
+                roomStr += ' <无密码>'
+            roomStr += '\n'
+        return send roomStr
+
+    `
+    args[0] = args[0].toLowerCase();
+    for (var loopIndex = 0, alreadyReged = false, roomName = '';
+             loopIndex < osuRooms.length;
+             loopIndex++) {
+
+        if (osuRooms[loopIndex].qnum == msg.qnum) {
+            alreadyReged = true;
+            roomName = osuRooms[loopIndex].name
+            break;
+        }
+    }
+    `
+    switch args[0]
+        when 'reg'
+            if (alreadyReged && !isOp)
+                return send sprintf '[%s] 您已经注册了一间房了, 请不要重复注册 :/', msg.from_user.nick
+
+            osuRooms.push (
+                Creator: msg.from_user.nick
+                qnum: msg.qnum
+                Name: args[1]
+                Password: args[2]
+            )
+            send sprintf '[%s] 房间注册成功 owo', msg.from_user.nick
+        when 'rm'
+            if (!alreadyReged)
+                return send sprintf '[%s] 很抱歉, 但是找不到您的登录信息 ><', msg.from_user.nick
+            osuRooms.splice loopIndex, 1;
+            send sprintf '[%s] 移除了房间 [%s]', msg.from_user.nick, roomName
+
+
 bodyPos = [ '手掌', '双脚', '熊脸', 
-            '脸蛋', '鼻子', '小嘴', 
-            '大○ [警×蜀黍就是他!!]', 
+            '脸蛋', '鼻子', '小嘴', '咪咪',
+            '大○ [警×蜀黍就是他!!]', '蛋蛋',
             '大× [不忍直视]', '双眼', 
             '脖子', '胸口', '大腿', '脚踝',
             '那里 >////<', '腋下', '耳朵',
@@ -257,6 +316,9 @@ regCommand ['rob', '抢钱'], '抢别人的钱 :3', (args, cmd, send, msg) ->
                     + msg.qnum + ' 抢走了 $'\
                     + Math.abs(moneyRobbed) + ', 真是可喜可贺可口可乐.'
 
+regCommand ['me'], '查询自己的信息', (args, cmd, send, msg) ->
+    send sprintf '[%s]: QNum: %s, uin: %s', msg.from_user.nick, msg.qnum, msg.from_uin
+
 regCommand ['money', 'balance', '余额'], '查询当前账号的余额', (args, cmd, send, msg) ->
     getUserInfo msg.qnum, (err, rows)->
         if !rows.length
@@ -297,47 +359,56 @@ regCommand ['roll', '摇点'], '摇点 0~100', (args, cmd, send, msg) ->
             ( if args.length then (parseInt(args[0]) or 0)\
                 else 0 )) + \
         ' 点';
-###
+
 regCommand ['hito', '一句话', '来一句'], '从 [hitokoto.us] 随机抽取一句话', (args, cmd, send, msg) ->
     doHttpGet 'http://api.hitokoto.us/rand', (str) ->
         s = parseJSON str
         if s != 0
             send s.hitokoto + '\n　　—— ' + s.source||s.author
-###
+
 regCommand ['ping'], 'pong!', (args, cmd, send, msg) ->
     # console.log arguments
     send 'pong!'
 
+splitNum = (num) ->
+    num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+
 osuReqModes = ['osu', '太鼓', 'CTB', 'mania'];
-regCommand ['ostats'], '<用户名> [模式: 0/1/2/3] 查询某个用户的 osu 信息 :3', (args, cmd, send, msg) ->
+osuCountryCode = 
+    GB: '腐国'
+    CN: '天朝'
+regCommand ['ostats'], '"<用户名>" [模式: 0/1/2/3] 查询某个用户的 osu 信息 :3', (args, cmd, send, msg) ->
     if args.length == 0
         return
     if args.length == 1
         args.push ('')
-    
+
     osuMode = parseInt((args[1].match(/[0-3]/)||[0])[0])
     doHttpGet sprintf('https://osu.ppy.sh/api/get_user?k=%s&u=%s&m=%s', 
-        defConf.osuApiKey, encodeURIComponent(args[0].replace(/_/g, ' ')), osuMode), (str) ->
+        defConf.osuApiKey, encodeURIComponent(args[0]), osuMode), (str) ->
             s = parseJSON str
             # console.log s, s.length
             if s == 0 || !s.length || !s[0].total_score
                 return
             # read info
             send sprintf '''
-%s 模式下, %s 的成绩如下:
+%s 模式下, [%s] %s 的成绩如下:
 总计分数: %s (#%s)
 游戏次数: %s (lv%s)
-　准确度: %s%%''', 
-                osuReqModes[osuMode], s[0].username,
-                s[0].ranked_score.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ","), s[0].pp_rank,
-                s[0].playcount, parseInt(s[0].level), parseFloat(s[0].accuracy).toFixed(2);
+　准确度: %s%%
+300: %s; 100: %s''', 
+                osuReqModes[osuMode], (osuCountryCode[s[0].country] || s[0].country), s[0].username,
+                splitNum(s[0].ranked_score), s[0].pp_rank,
+                s[0].playcount, parseInt(s[0].level), parseFloat(s[0].accuracy).toFixed(2),
+                splitNum(s[0].count300), splitNum(s[0].count100);
 
 regCommand ['晚安', 'gn'], '晚安~', (args, cmd, send, msg) ->
     send '晚安, ' + (if args.length > 0 then args[0] else msg.from_user.nick) + '~'
 
-regCommand ['欢迎'], '<新人昵称> 新人进群时用~~', (args, cmd, send, msg) ->
+regCommand ['欢迎', '新人'], '<新人昵称> 新人进群时用~~', (args, cmd, send, msg) ->
     if args.length > 0
-        send '欢迎新人 [' + args[0] + '] ~\n新人新年好, 红包果照都拿来吧 owo'
+        send '欢迎新人 [' + args[0] + '] ~\n新人新年好, 红包果照都拿来吧 owo' \
+            +'\n你可以通过输入 !签到 执行当天的签到 owo'
 
 regCommand ['save'], '储存设定, 用户操作后必须 *', (args, cmd, send, msg, isOp) ->
     if !isOp
@@ -358,7 +429,7 @@ regCommand ['ban'], '封锁 *', (args, cmd, send, msg, isOp) ->
             conf.conf.ban.push k
         i++
     # conf.save conf.conf
-    send sprintf '[%s] 封禁完毕: %s', msg.from_user.nick, args.join('、')
+    send sprintf '[%s] 封禁成功: %s', msg.from_user.nick, args.join('、')
 
 regCommand ['banlist'], '查询封锁 *', (args, cmd, send, msg, isOp) ->
     if !isOp
@@ -384,7 +455,7 @@ regCommand ['unban'], '取消封锁 *', (args, cmd, send, msg, isOp) ->
             delete conf.conf.ban[j]
         i++
     conf.conf.ban = cleanArray conf.conf.ban
-    send sprintf '[%s] 解封完毕: %s', msg.from_user.nick, args.join('、')
+    send sprintf '[%s] 解封成功: %s', msg.from_user.nick, args.join('、')
 
 regCommand ['reload'], '重载服务器 *', (args, cmd, send, msg, isOp) ->
     if isOp

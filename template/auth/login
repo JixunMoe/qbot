@@ -1,0 +1,24 @@
+<#
+$_G.boxMsg = '';
+if ($_POST['logun'] && userLogins[$_POST['logun']] == $_POST['logpw']) {
+	// 是管理员 owo
+	loginAuth = '';
+	for (var i=0; i<2; i++) loginAuth += Math.random().toString().replace(/\./g, '');
+	setCookie ('auth', loginAuth);
+	$_G.boxMsg = '登陆成功! <a href="/">[ 点我返回 ]</a><script>;setTimeout(function () {location.href="/"}, 5000);</script>';
+} else {
+	$_G.boxMsg = '登陆失败 :/';
+}
+#><html>
+<head>
+	<meta charset="UTF-8" />
+	<title>QBot 管理后台 - 登陆</title>
+	<link rel="stylesheet" href="/main.css">
+</head>
+<body>
+<h1>QBot 管理后台 - 登陆</h1>
+<div class="box">
+<# echo ($_G.boxMsg); #>
+</div>
+</body>
+</html>

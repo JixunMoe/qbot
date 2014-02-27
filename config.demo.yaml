@@ -2,21 +2,34 @@
 # 使用前请将该文档更名为 config.yaml
 
 # qqbot帐号
-account:  2794263266
-password: 
+account:  'Q 号'
+password: '密码'
 
-# 验证码图片
+# 前端操作
 port: 3100
-host: localhost
 
-# 插件列表
+# 这个可以省略?
+# host: localhost
+
+# 插件列表…
 plugins:
     - help
 
-# 激活api服务
-api-port:  3000
-api-token: ''
+# 激活api服务; 暂时关闭
+#api-port:  3000
+#api-token: ''
+
+# 管理员帐号
+opAccount:
+  - 1783943964
 
 # 封禁账号列表; 可通过聊天指令操作
 ban:
-	- "123456"
+    - "10000"
+
+web:
+  auth:
+    # 网页前端登录帐号; 
+    # 格式: '用户名': '密码'
+    # 一行一个~
+    'Admin': 'Kami.Sama.no.QBot'

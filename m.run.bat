@@ -3,5 +3,5 @@
 @echo.   按下 Ctrl+C -^> 输入 N 重启 QBot 
 @echo.     内置  /reload 指令重载插件     
 @echo.====================================
-@coffee main.coffee
+@node q.js
 @%0

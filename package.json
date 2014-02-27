@@ -27,7 +27,8 @@
     "scoped-http-client": ">= 0.9.8",
     "log":                ">= 1.4.0",
     "js-yaml" :           ">= 3.0.0",
-    "mysql2":             ">= 0.11.4"
+    "mysql2":             ">= 0.11.4",
+    'mathjs':             '>= 0.0.1'
   },
 
   "engines": {

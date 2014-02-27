@@ -43,7 +43,7 @@ http_request = (options , params , callback) ->
         req.write(data);
     req.end();
 
-handle_resp_body = (body , callback) ->
+handle_resp_body = (body, callback) ->
     err = null
     try
         ret = JSON.parse body

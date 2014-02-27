@@ -1,0 +1,56 @@
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>好友处理</title>
+	<link rel="stylesheet" href="/main.css">
+	<script src="//code.jquery.com/jquery.min.js"></script>
+	<script src="/friend.js"></script>
+</head>
+<body>
+	<# loadTemplate('/header.tpl'); #>
+	<h1>待处理好友列表</h1>
+	<ul><#
+function es (inp) {
+	return inp.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+
+var procNum   = $_GET['Q'],
+	friendAct = $_GET['action'];
+
+if (procNum) {
+	if (friendAct == 'accept' || friendAct == 'deny') {
+		var numTodo = [];
+		if (procNum == 'all') {
+			bot.friendQueue.forEach (function (e){
+				numTodo.push (e.account)
+			});
+			bot.friendQueue = [];
+		} else {
+			var tempQnum = '';
+			bot.friendQueue.forEach (function (e){
+				if (e.account == procNum)
+					tempQnum = procNum;
+			});
+			tempQnum && numTodo.push (tempQnum);
+		}
+
+		bot.friendQueue = bot.friendQueue.filter(function (e) {
+			return numTodo.indexOf (e.account) == -1;
+		});
+
+		numTodo.forEach (function (q) {
+			api [friendAct + 'Friend'] (q);
+		});
+	}
+}
+
+bot.friendQueue.forEach (function (e) {
+	echo ('<li class="fr" data="' + e.account + '">' + e.account 
+			+ es('<' + (e.uiuin || '无邮箱') + '>') + ': ' + es(e.msg || '<无验证消息>') + '</li>');
+});
+
+#>	</ul>
+	<div>批量操作: <a href="?action=accept&Q=all">全部同意</a> | <a href="?action=deny&Q=all">全部拒绝</a></div>
+</body>
+</html>

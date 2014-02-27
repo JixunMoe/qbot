@@ -1,0 +1,16 @@
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>验证码服务器</title>
+	<link rel="stylesheet" href="/main.css">
+</head>
+<body>
+	<# loadTemplate('/header.tpl'); #>
+	<p>请输入下方所示验证码:</p>
+	<div class="c"><img src="/code.img" id="code"/></div>
+	<form method="POST" action="/submit">
+		<p><label for="codeInp">验证码: </label><input id="codeInp" name="code" /></p>
+		<p><input type="submit" value="提交" /></p>
+	</form>
+</body>
+</html>

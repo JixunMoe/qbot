@@ -1,0 +1,14 @@
+<#
+	$_POST['code'] && codeCallback ($_POST['code']);
+#>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>验证码服务器</title>
+	<link rel="stylesheet" href="/main.css">
+</head>
+<body>
+<h1>感谢您的提交 :/</h1>
+<p>验证码 <# echo ($_POST['code']); #> 已提交，如果机器人未成功登陆请 [<a href="/">点我</a>] 重新输入。</p>
+</body>
+</html>	
