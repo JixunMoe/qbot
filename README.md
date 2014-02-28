@@ -4,9 +4,12 @@ QQBot
 官方的有些东西感觉做的不够完善, 只好自己动手「丰衣足食」
 
 > A Hubot adapter for QQ! And also A independence robot lives on the real world.
+
 > FYI: QQ is a instant messaging service widely used in china provided by Tencent.
+
 > 基于 [WebQQ协议](https://github.com/xhan/qqbot/blob/master/protocol.md) 的QQ机器人。
-> 命令行工具，由不可思议的 [CoffeeScript](http://coffeescript.org/) 提供支持。  
+
+命令行工具，由不可思议的 [NodeJS](http://nodejs.org) 以及越写越头晕的 [CoffeeScript](http://coffeescript.org/) 提供支持。  
 
 
 功能 Features
@@ -14,12 +17,12 @@ QQBot
 * 登录和验证码支持
 * 插件化，目前支持消息的派发（你可以编写各种QA形式的插件，做个小黄鸡完全是可以的！欢迎提交有趣的插件）
 * [没懂…] 可作为hubot adapter使用
-* [还没动] 提供HTTP API支持（比如群通知什么的都能做哦）
 
 改造功能
 -----
 * 插件优化了下… 不过目前只有自己写的插件规范 xD
 * 插件的 msg 获取能获取进来的 Q 号 :3
+* 网页后台操作 (+ 从配置授权管理员)
 
 关于 Hubot Adapter
 ------
@@ -35,12 +38,15 @@ QQBot
 * 等待更新的时候, 配置 `config.yaml` 设定
 * 执行 `coffee main.coffee` 启动机器人~!
 
-部署
+网页后台操作
 -----
-部署环境中一般没法操作`STDIN`和机器人交互，所以现在提供了 `Http Api` 提供验证码输入:    
->  GET http://localhost:port/stdin?token=(token)&value=(value)  
-我常用的命令 `./main.coffee nologin &>> tmp/dev.log &`
+在 config.yaml 指定网页端口; 如 3100
 
+然后浏览器访问 `http://{地址}:端口/` 登陆后即可操作 (登陆信息也在 config.yaml)
+
+目前网页后台完成的功能:
+* 填写验证码 (TODO: 刷新验证码)
+* (批量) 接受/拒绝好友请求 (TODO: 可选批量接受哪些而不是全部 orz)
 
 关于
 ----
@@ -52,15 +58,18 @@ QQBot
 
 资料
 ----
-* WebQQ协议     https://github.com/xhan/qqbot/blob/master/protocol.md
-* WebQQ协议专题  http://www.10qf.com/forum-52-1.html
-* 开源的webqq协议的win客户端 https://code.google.com/p/mingqq/
+名称 | 地址 |
+---- | ---- |
+WebQQ 协议 | https://github.com/xhan/qqbot/blob/master/protocol.md |
+WebQQ 协议专题 | http://www.10qf.com/forum-52-1.html |
+基于 WebQQ 协议的开源 Win 客户端 | https://code.google.com/p/mingqq/ |
 
 
-TODO
+TODO 列表
 ---
 * ~~机器人响应前缀~~
 * ~~支持讨论组~~ 没必要
 * 图片发送支持
 * plugin try-catch, reload on the run
-* 动态重载指定插件
+* ~~ 动态重载指定插件 ~~ 搞定
+* 完善网页后台功能

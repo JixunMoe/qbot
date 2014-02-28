@@ -4,3 +4,6 @@ config.yaml
 dbConf.coffee
 dbTest.*
 ~*
+*.sublime-workspace
+.sublime-project
+Cakefile

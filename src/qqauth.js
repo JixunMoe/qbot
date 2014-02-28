@@ -10,7 +10,7 @@ var https = require("https"),
 	log = new Log('debug');
 
 function md5 (str) {
-	return crypto.createHash('md5').update(str).digest('hex');
+	return crypto.createHash('md5').update(str.toString()).digest('hex');
 };
 function int (v, b) {
 	return parseInt(v, b||10);
@@ -118,7 +118,7 @@ exports.login_step2 = function (url, callback) {
 	};
 	body = '';
 	http.get(options, function (resp) {
-		log.debug("response: " + resp.statusCode);
+		log.debug("Login Response: " + resp.statusCode);
 		all_cookies = all_cookies.concat(resp.headers['set-cookie']);
 		callback(true);
 	}).on("error", function (e) {
@@ -126,45 +126,42 @@ exports.login_step2 = function (url, callback) {
 	});
 };
 exports.login_token = function (callback) {
-	var body, client_id, data, options, ptwebqq, r, req;
-	client_id = 97500000 + parseInt(Math.random() * 99999);
-	ptwebqq = all_cookies.filter(function (item) {
-		return /ptwebqq/.test(item);
-	}).pop().replace(/ptwebqq\=(.*?);.*/, '$1');
-
-	data = querystring.stringify({
-		clientid: client_id,
-		psessionid: 'null',
-		r: JSON.stringify({
-			status: "online",
-			ptwebqq: ptwebqq,
-			passwd_sig: "",
+	var body = '',
+		client_id = 97500000 + int (Math.random() * 99999),
+		ptwebqq = all_cookies.filter(function (item) {
+				return /ptwebqq/.test(item);
+			}).pop().replace(/ptwebqq\=(.*?);.*/, '$1'),
+		data = querystring.stringify({
 			clientid: client_id,
-			psessionid: null
-		})
-	});
-	body = '';
-	options = {
-		host: 'd.web2.qq.com',
-		path: '/channel/login2',
-		method: 'POST',
-		headers: {
-			'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36',
-			'Referer': 'http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=3',
-			'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-			'Content-Length': Buffer.byteLength(data),
-			'Cookie': all_cookies
-		}
-	};
-	req = http.request(options, function (resp) {
-		log.debug("login token response: " + resp.statusCode);
-		resp.on('data', function (chunk) {
-			body += chunk;
+			psessionid: 'null',
+			r: JSON.stringify({
+				status: "online",
+				ptwebqq: ptwebqq,
+				passwd_sig: "",
+				clientid: client_id,
+				psessionid: null
+			})
+		}), options = {
+			host: 'd.web2.qq.com',
+			path: '/channel/login2',
+			method: 'POST',
+			headers: {
+				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36',
+				'Referer': 'http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=3',
+				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+				'Content-Length': Buffer.byteLength(data),
+				'Cookie': all_cookies
+			}
+		},
+		req = http.request(options, function (resp) {
+			log.debug("Login Token response: " + resp.statusCode);
+			resp.on('data', function (chunk) {
+				body += chunk;
+			});
+			resp.on('end', function () {
+				callback(JSON.parse(body), client_id, ptwebqq);
+			});
 		});
-		resp.on('end', function () {
-			callback(JSON.parse(body), client_id, ptwebqq);
-		});
-	});
 	req.write(data);
 	req.end();
 };
@@ -191,7 +188,7 @@ exports.login = function (opt, callback) {
 			auth.get_verify_code(qq, opt.host, opt.port, function (error) {
 				if (process.platform === 'darwin')
 					require('child_process').exec('open tmp');
-				log.notice("Please login and type the code: http://" + opt.host + ":" + opt.port);
+				log.notice("Please login and type the code: http://" + (opt.host || '127.0.0.1') + ":" + opt.port);
 				front.setCodeCallback(function (verify_code) {
 					log.notice('Code checking：', verify_code);
 					login_next(qq, auth.encode_password(opt.password, verify_code, bits), verify_code, callback);

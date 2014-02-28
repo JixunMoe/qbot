@@ -297,14 +297,16 @@ QQBot = (function () {
 				break;
 		}
 	};
+	// Useless function
+	QQBot.prototype.cb_token_changed = function () {};
 	QQBot.prototype.on_token_changed = function (callback) {
 		this.cb_token_changed = callback;
 	};
 	QQBot.prototype._update_ptwebqq = function (ret) {
-		log.info('need to update ptwebqq ', ret);
+		log.info('Update ptwebqq: ', ret);
 		this.auth['ptwebqq'] = ret.p;
-		if (this.cb_token_changed)
-			this.cb_token_changed(this.auth);
+		api.setAuth (this.auth);
+		this.cb_token_changed(this.auth);
 	};
 	QQBot.prototype._handle_poll_event = function (event) {
 		switch (event.poll_type) {
