@@ -185,7 +185,7 @@ regCommand ['time', '时间', '报时'], '查询系统时间; 参数1 可为时�
     newHour = timeObj.getHours() + tz - timeObj.getTimezoneOffset();
     newHour += 24  while newHour < 0
     # Send time
-    send 'UTC ' + (if tz >= 0 then '+' else '-') + padZero(Math.abs(tz)) + ' 时间: ' + padZero(newHour % 24)\
+    send 'UTC ' + (if tz >= 0 then '+' else '-') + padZero(Math.abs(tz) % 24) + ' 时间: ' + padZero(newHour % 24)\
         + ':' + padZero(timeObj.getMinutes()) + ':' + padZero(timeObj.getSeconds())
 
 regCommand ['sign', '签到'], '执行当天的签到, 重复签到将受惩罚~', (args, cmd, send, msg) ->
@@ -204,7 +204,7 @@ regCommand ['sign', '签到'], '执行当天的签到, 重复签到将受惩罚~
             if timeNow - lastTimeSign < 16*60*60*1000 and lastTimeSign.getDate() == timeNow.getDate()
                 # 24 小时内签到 :/
                 return send msg.from_user.nick + '已在 ' + strLastSign\
-                    + ' 签到过了.\n作为惩罚… 我还没想好 ;w;'
+                    + ' 签到过了.\n作为惩罚… Pupa ~☆'
                 # 检查是否为同一日
             # 加钱
             ranMoneyTop = Math.random() * defConf.signMaxMoney
@@ -316,8 +316,10 @@ regCommand ['rob', '抢钱'], '抢别人的钱 :3', (args, cmd, send, msg) ->
                     + msg.qnum + ' 抢走了 $'\
                     + Math.abs(moneyRobbed) + ', 真是可喜可贺可口可乐.'
 
-regCommand ['me'], '查询自己的信息', (args, cmd, send, msg) ->
-    send sprintf '[%s]: QNum: %s, uin: %s', msg.from_user.nick, msg.qnum, msg.from_uin
+regCommand ['me'], '查询自己的信息/osu 模式', (args, cmd, send, msg) ->
+    if args.length < 1
+        return send sprintf '[%s]: QNum: %s, uin: %s', msg.from_user.nick, msg.qnum, msg.from_uin
+    send sprintf '*%s %s', msg.from_user.nick, args.join(' ')
 
 regCommand ['money', 'balance', '余额'], '查询当前账号的余额', (args, cmd, send, msg) ->
     getUserInfo msg.qnum, (err, rows)->
@@ -364,7 +366,7 @@ regCommand ['hito', '一句话', '来一句'], '从 [hitokoto.us] 随机抽取�
     doHttpGet 'http://api.hitokoto.us/rand', (str) ->
         s = parseJSON str
         if s != 0
-            send s.hitokoto + '\n　　—— ' + s.source||s.author
+            send s.hitokoto + '\n　　—— ' + s.source||s.author||'匿名'
 
 regCommand ['ping'], 'pong!', (args, cmd, send, msg) ->
     # console.log arguments

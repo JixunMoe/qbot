@@ -1,0 +1,16 @@
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>群列表</title>
+	<link rel="stylesheet" href="/main.css">
+	<script src="//code.jquery.com/jquery.min.js"></script>
+	<script src="/friend.js"></script>
+</head>
+<body>
+	<# loadTemplate('/header.tpl'); #>
+	<h1>群列表 (调试状态)</h1>
+	<pre><#
+echo (require('util').inspect(bot.groupmember_info, { showHidden: false, depth: 5 }));
+#>	</pre>
+</body>
+</html>

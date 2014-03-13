@@ -7,3 +7,4 @@ dbTest.*
 *.sublime-workspace
 .sublime-project
 Cakefile
+internet.test.js

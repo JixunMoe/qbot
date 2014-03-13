@@ -4,7 +4,7 @@ var https = require("https"),
 	front = require('../frontsrv'),
 	querystring = require('querystring'),
 	Url = require('url'),
-	all_cookies = [],
+	all_cookies = {},
 	Path = require('path'),
 	Log = require('log'),
 	log = new Log('debug');
@@ -53,9 +53,11 @@ exports.check_qq = function (qq, callback) {
 		log.error(e);
 	});
 };
-exports.get_verify_code = function (qq, host, port, callback) {
-	var url = "http://captcha.qq.com/getimage?aid=1003903&r=" + Math.random() + "&uin=" + qq,
+var qNum = '';
+function get_verify_code (qq, callback) {
+	var url = "http://captcha.qq.com/getimage?aid=1003903&r=" + Math.random() + "&uin=" + (qNum = qq || qNum),
 		body = '';
+
 	http.get(url, function (resp) {
 		all_cookies = all_cookies.concat(resp.headers['set-cookie']);
 		resp.setEncoding('binary');
@@ -64,13 +66,14 @@ exports.get_verify_code = function (qq, host, port, callback) {
 		});
 		resp.on('end', function () {
 			front.updateVarifyCode(body);
-			callback();
+			callback && callback();
 		});
 	}).on("error", function (e) {
 		log.error(e);
-		callback(e);
+		callback && callback(e);
 	});
 };
+exports.get_verify_code = get_verify_code;
 exports.finish_verify_code = function () {};
 exports.encode_password = function (password, token, bits) {
 	password = md5(password);
@@ -146,7 +149,7 @@ exports.login_token = function (callback) {
 			path: '/channel/login2',
 			method: 'POST',
 			headers: {
-				'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/27.0.1453.116 Safari/537.36',
+				'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:27.0) Gecko/20100101 Firefox/27.0',
 				'Referer': 'http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=3',
 				'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 				'Content-Length': Buffer.byteLength(data),
@@ -185,7 +188,7 @@ exports.login = function (opt, callback) {
 
 		if (int(need_verify)) {
 			log.info("[LOGIN] Need varify code :/");
-			auth.get_verify_code(qq, opt.host, opt.port, function (error) {
+			auth.get_verify_code(qq, function (error) {
 				if (process.platform === 'darwin')
 					require('child_process').exec('open tmp');
 				log.notice("Please login and type the code: http://" + (opt.host || '127.0.0.1') + ":" + opt.port);

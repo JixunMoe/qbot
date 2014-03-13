@@ -38,8 +38,11 @@ function long_poll (callback) {
 			ids: []
 		})
 	}, function (ret, e) {
-		long_poll(callback);
-		callback(ret, e);
+		// 等待一段时间后常轮训;
+		setTimeout (function () {
+			long_poll(callback);
+		}, 700);
+		if (!e) callback(ret, e);
 	});
 };
 
@@ -116,7 +119,6 @@ exports.denyFriend = function (QNum, reason, callback) {
 	});
 }
 
-
 exports.get_group_list = function (callback) {
 	client.post({
 		url: 'http://s.web2.qq.com/api/get_group_name_list_mask2'
@@ -124,9 +126,7 @@ exports.get_group_list = function (callback) {
 		r: jsons({
 			vfwebqq: auth.vfwebqq
 		})
-	}, function (ret, e) {
-		callback(ret, e);
-	});
+	}, callback);
 };
 
 exports.get_group_member = function (group_code, callback) {
@@ -147,71 +147,58 @@ exports.get_qnum_by_id = function (uid, type, callback) {
 	client.get({
 		url: url
 	}, function (ret, e) {
-		console.log ('get_qnum_by_id', ret);
+		// console.log ('get_qnum_by_id', ret);
 		callback(ret, e);
 	});
 };
 
-exports.send_msg_2buddy = function (to_uin, msg, callback) {
-	var	url = "http://d.web2.qq.com/channel/send_buddy_msg2",
-		r = {
+var defFont = {
+	name: "微软雅黑",
+	size: "10",
+	style: [0, 0, 0],
+	color: "ff6600"
+};
+
+// 8 位数字..
+function getMsgId () {
+	return Math.random().toString().slice(2, 10)
+}
+
+exports.send_msg_2buddy = function (to_uin, msg, callback, font) {
+	client.post({
+		url: 'http://d.web2.qq.com/channel/send_buddy_msg2'
+	}, {
+		r: jsons({
 			to: to_uin,
 			face: 0,
-			msg_id: parseInt(Math.random() * 100000 + 1000),
-			clientid: "" + auth.clientid,
-			psessionid: auth.psessionid,
-			content: jsons([
-				msg, [
-					"font", {
-						name: "微软雅黑",
-						size: "10",
-						style: [0, 0, 0],
-						color: "ff6600"
-					}
-				]
-			])
-		},
-		params = {
-			r: jsons(r),
+			msg_id: getMsgId(),
 			clientid: auth.clientid,
-			psessionid: auth.psessionid
-		};
-	client.post({
-		url: url
-	}, params, function (ret, e) {
-		log.debug('send2user', jsons(ret));
+			psessionid: auth.psessionid,
+			content: jsons ([msg, ["font", font || defFont]])
+		}),
+		clientid: auth.clientid,
+		psessionid: auth.psessionid
+	}, function (ret, e) {
+		log.debug('[^Q]: ', jsons(ret));
 		callback(ret, e);
 	});
 };
 
-exports.send_msg_2group = function (gid, msg, callback) {
-	var url = 'http://d.web2.qq.com/channel/send_qun_msg2',
-		r = {
+exports.send_msg_2group = function (gid, msg, callback, font) {
+	client.post({
+		url: 'http://d.web2.qq.com/channel/send_qun_msg2'
+	}, {
+		r: jsons({
 			group_uin: gid,
-			msg_id: parseInt(Math.random() * 100000 + 1000),
+			msg_id: getMsgId(),
 			clientid: auth.clientid,
 			psessionid: auth.psessionid,
-			content: jsons([
-				msg, [
-					"font", {
-						name: "微软雅黑",
-						size: "10",
-						style: [0, 0, 0],
-						color: "ff6600"
-					}
-				]
-			])
-		},
-		params = {
-			r: jsons(r),
-			clientid: auth.clientid,
-			psessionid: auth.psessionid
-		};
-
-	client.post({
-		url: url
-	}, params, function (ret, e) {
-		log.debug('send2group', jsons(ret));
+			content: jsons ([msg, ["font", font || defFont]])
+		}),
+		clientid: auth.clientid,
+		psessionid: auth.psessionid
+	}, function (ret, e) {
+		log.debug('[^G]: ', jsons(ret));
 		callback(ret, e);
 	});
 };

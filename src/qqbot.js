@@ -79,6 +79,7 @@ QQBot = (function () {
 		this.group_info = group_info;
 	};
 	QQBot.prototype.save_group_member = function (group, info) {
+		// console.log ('save_group_member', group, info);
 		this.groupmember_info[group.gid] = info;
 	};
 	QQBot.prototype.get_user = function (uin) {
@@ -92,7 +93,7 @@ QQBot = (function () {
 			info = this.groupmember_info[gid],
 			users = info.minfo.filter(function (item) {
 			return item.uin === uin;
-		}), cardUser = info.cards.filter(function (item) {
+		}), cardUser = (info.cards||[]).filter(function (item) {
 			return item.muin === uin;
 		});
 
@@ -102,7 +103,9 @@ QQBot = (function () {
 
 		if (!users.length) {
 			log.info ('Group\'s too old! Try to update...');
-			this.update_group_member ({gid: gid, code: gid}, function (bSuccess, errStr) {
+			
+			
+			this.update_group_member (this.get_group ({gid: gid}), function (bSuccess, errStr) {
 				if (errStr)
 					return log.info('更新群出错! ', errStr);
 				_that.get_user_ingroup (uin, gid, fCB, true);
@@ -114,13 +117,10 @@ QQBot = (function () {
 		}
 	};
 	QQBot.prototype.get_group = function (options) {
-		var groups;
-		groups = this.group_info.gnamelist.filter(function (item) {
+		var groups = this.group_info.gnamelist.filter(function (item) {
 			var key, value;
-			for (key in options) {
-				value = options[key];
-				return item[key] === value;
-			}
+			for (key in options)
+				return item[key] === options[key];
 		});
 		return groups.pop();
 	};
@@ -131,7 +131,7 @@ QQBot = (function () {
 			if (ret.retcode === 0)
 				_that.save_group_info(ret.result);
 			if (callback)
-				return callback(ret.retcode === 0, e || 'retcode isnot 0');
+				callback(ret.retcode === 0, e || 'retcode isnot 0');
 		});
 	};
 	QQBot.prototype.update_buddy_list = function (callback) {
@@ -174,13 +174,11 @@ QQBot = (function () {
 		
 	};
 	QQBot.prototype.update_all_members = function (callback) {
-		var actions, check;
-		actions = {
+		var actions = {
 			buddy: [0, 0],
 			group: [0, 0],
 			groupmember: [0, 0]
-		};
-		check = function () {
+		}, check = function () {
 			var all, finished, item, key, stats, successed, value, _i, _len;
 			finished = successed = 0;
 			all = Object.keys(actions).length;
@@ -206,45 +204,40 @@ QQBot = (function () {
 		log.info('fetching buddy list...');
 		this.update_buddy_list(function (ret) {
 			actions.buddy = [1, ret];
-			return check();
+			check();
 		});
+
 		log.info('fetching group list...');
-		return this.update_group_list((function (_this) {
-			return function (ret) {
-				actions.group = [1, ret];
-				if (!ret) {
-					callback(false);
-					return;
-				}
-				log.info('fetching all groupmember...');
-				return _this.update_all_group_member(function (ret, all, successed) {
-					actions.groupmember = [1, ret];
-					return check();
-				});
-			};
-		})(this));
+		var _that = this;
+		this.update_group_list(function (ret) {
+			actions.group = [1, ret];
+			if (!ret) {
+				callback(false);
+				return;
+			}
+			log.info('fetching all groupmember...');
+			_that.update_all_group_member(function (ret, all, successed) {
+				actions.groupmember = [1, ret];
+				check();
+			});
+		});
 	};
 	QQBot.prototype.runloop = function (callback) {
 		var _that = this;
 		this.api.long_poll(function (ret, e) {
 			_that.handle_poll_responce(ret, e);
-			if (callback)
-				callback(ret, e);
+			callback && callback(ret, e);
 		});
 	};
-	QQBot.prototype.reply_message = function (message, content, callback) {
+	QQBot.prototype.reply_message = function (message, content, callback, font) {
 		log.info("发送消息: ", content);
 		if (message.type === 'group') {
 			this.api.send_msg_2group(message.from_gid, content, function (ret, e) {
-				if (callback) {
-					callback(ret, e);
-				}
+				callback && callback(ret, e);
 			});
 		} else if (message.type === 'buddy') {
 			this.api.send_msg_2buddy(message.from_uin, content, function (ret, e) {
-				if (callback) {
-					callback(ret, e);
-				}
+				callback && callback(ret, e);
 			});
 		}
 	};
@@ -266,6 +259,7 @@ QQBot = (function () {
 		return process.exit(1);
 	};
 	QQBot.prototype.handle_poll_responce = function (resp, e) {
+		console.log('handle_poll_responce: ', arguments)
 		if (e) log.error("[POLL] there's error: " + e);
 
 		var retCode = resp ? resp.retcode : -1;
@@ -280,9 +274,10 @@ QQBot = (function () {
 
 				return ret;
 			case 102:
-				log.info ('[POLL] 102, nothing happened.');
-				break;
 			case 103:
+				log.info ('[POLL] ' + retCode);
+				break;
+			// case 103:
 				// 应该是token失效了，但是偶尔也有情况返回
 				this.die("[POLL] 登录异常 " + retCode, resp);
 				break;
@@ -290,7 +285,7 @@ QQBot = (function () {
 				this._update_ptwebqq(resp);
 				break;
 			case 121:
-				this.die("[POLL] 登录异常 " + retCode, resp);
+				this.die("[POLL] 目测掉线: " + retCode, resp);
 				break;
 			default:
 				log.debug(resp);
@@ -354,7 +349,6 @@ QQBot = (function () {
 		});
 	};
 	QQBot.prototype._on_message_next = function (msg, _that, msgContent) {
-
 		_that.getQnum(msg.from_uin, 1, function (qqnum) {
 			msg.qnum = qqnum;
 			_that.dispatcher.dispatch(msgContent, function (content){
