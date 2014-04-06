@@ -8,3 +8,4 @@ dbTest.*
 .sublime-project
 Cakefile
 internet.test.js
+test.js

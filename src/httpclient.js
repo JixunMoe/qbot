@@ -25,6 +25,7 @@ function http_request (options, postData, callback) {
 	}
 	options.headers['Cookie'] = globalCookie;
 	options.headers['Referer'] = 'http://d.web2.qq.com/proxy.html?v=20110331002&callback=1&id=3';
+	// http://cgi.web2.qq.com/proxy.html?v=20110412001&callback=1&id=
 
 	var lastRespond = 0,
 		respFinished = false,
@@ -41,18 +42,21 @@ function http_request (options, postData, callback) {
 		});
 	});
 
+	req.on('error', function(e) {
+		respFinished = true;
+		console.log('请求出错: ' + e.message);
+	});
+
 	intervalCheck = setInterval (function () {
 		if (respFinished)
 			return clearInterval(intervalCheck);
 
-		if (new Date - lastRespond >= 120000)
+		if (new Date - lastRespond >= 120000){
 			callback(null, 'No response');
+			clearInterval(intervalCheck);
+		}
 	}, 120000); // 2 * 60 * 1000
 
-	req.on("error", function (e) {
-		console.log ('Connection error');
-		callback(null, e);
-	});
 	if (postData && options.method === 'POST') {
 		req.write(data);
 	}
@@ -61,12 +65,13 @@ function http_request (options, postData, callback) {
 
 function handle_resp_body (body, callback) {
 	try {
-		callback(JSON.parse(body.replace(/(^\s*|\s*$)/g, '')));
+		var q = (JSON.parse(body.replace(/(^\s*|\s*$)/g, '')));
 	} catch (_error) {
 		console.log('网络数据解析错误:', body);
 		err = _error;
-		callback(null, _error);
+		return callback(null, _error);
 	}
+	callback (q);
 }
 
 function http_get (options, callback) {

@@ -1,0 +1,13 @@
+<#
+var ret = { error: -1 };
+switch ($_POST.type) {
+	case 'group':
+		console.log ($_POST);
+		bot.send_message_to_group ($_POST.groupid, $_POST.msg);
+		ret.error = 0;
+		break;
+}
+
+echo (JSON.stringify(ret));
+
+#>

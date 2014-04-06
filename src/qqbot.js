@@ -145,16 +145,17 @@ QQBot = (function () {
 			}
 		});
 	};
-	QQBot.prototype.update_group_member = function (options, callback) {
+	QQBot.prototype.update_group_member = function (options, callback, noMoreRetry) {
 		var _that = this,
 			group = options.code ? options : this.get_group(options);
 		api.get_group_member(group.code, function (ret, e) {
-
-			if (ret.retcode === 0)
+			if (ret.retcode === 0) {
 				_that.save_group_member(group, ret.result);
-
-			if (callback)
-				callback(ret.retcode === 0, e);
+				callback(true, e);
+				return ;
+			}
+			if (noMoreRetry) return;
+			_that.update_group_member (options, callback, true);
 		});
 	};
 	QQBot.prototype.update_all_group_member = function (callback) {
@@ -206,7 +207,6 @@ QQBot = (function () {
 			actions.buddy = [1, ret];
 			check();
 		});
-
 		log.info('fetching group list...');
 		var _that = this;
 		this.update_group_list(function (ret) {

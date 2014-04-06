@@ -37,3 +37,20 @@ label {
 .pull-right {
 	float: right;
 }
+
+
+ul#groupmsg>li {
+	cursor: pointer;
+}
+
+.labelWidth > label {
+	width: 5em;
+}
+
+.top-align{
+	vertical-align: top;
+}
+
+textarea {
+	margin: 0 5px;
+}

@@ -1,0 +1,26 @@
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>群发言 (无法接收, TODO)</title>
+	<link rel="stylesheet" href="/main.css">
+	<script src="//code.jquery.com/jquery.min.js"></script>
+	<script src="/groupmsg.js"></script>
+</head>
+<body>
+	<# loadTemplate('/header.tpl'); #>
+	<h1>群发言 (无法回收)</h1>
+<ul id="groupmsg">
+	<#
+	for (var groupId in bot.groupmember_info) {
+		var info = bot.groupmember_info [groupId];
+		echo ('<li class="group" data-group="' + groupId + '">');
+		echo (info.ginfo.name + ' [' + groupId + ']');
+		echo ('</li>');
+	}
+	#>
+	<p class="labelWidth"><label for="groupid">群ID</label> <input id="groupid" /><span id="groupstr"></span></p>
+	<p class="labelWidth"><label for="message" class="top-align">消息</label><textarea id="message" cols=40 rows=6></textarea></p>
+	<button id="send">发送</button><span id="status"></span>
+</ul>
+</body>
+</html>
