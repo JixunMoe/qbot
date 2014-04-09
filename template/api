@@ -1,0 +1,43 @@
+<#
+var ret = { error: 0 };
+
+if (!$_GET) $_GET = {};
+
+switch ($_GET.action) {
+	case 'groupList':
+		ret.data = bot.groupmember_info;
+		break;
+	case 'code':
+		if ($_POST.code)
+			codeCallback ($_POST.code);
+		break;
+	case 'groupmsg':
+		console.log ($_POST);
+		if ($_POST.msg) {
+			try {
+				groupList = $_POST['groupList[]'];
+				if (!groupList) {
+					throw new Error ('没有发送的目标');
+				}
+				if ('string' == typeof groupList)
+					groupList = [groupList];
+
+				groupList.forEach (function (gid) {
+					console.log ('发送至 %s', gid);
+					bot.send_message_to_group (gid, $_POST.msg);
+				});
+			} catch (e) {
+				ret.error = e.toString();
+			}
+		} else {
+			ret.error = '信息不能为空!';
+		}
+		break;
+	default:
+		ret.error = -1;
+		break;
+}
+
+echo (JSON.stringify(ret));
+
+#>

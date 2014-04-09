@@ -715,6 +715,13 @@ regCommand(['help', '帮助', '功能'], '显示该信息 :3', function (args, c
 	return send(sprintf('帮助 - Coffee.Bot 二次开发 By Jixun.Moe\n%s\n第 %s 页, 共 %s 页;%s', helpList.slice(stRow, stRow + 5).join('\n'), page, helpTotal, (page === helpTotal ? '' : sprintf(' 输入 !%s %s 查看下一页', cmd, page + 1))));
 });
 
+regCommand(['eatcookie', '吃饼干'], '吃饼干 oWo', function (args, cmd, send, msg) {
+	send ('诶~ 可以么 owo');
+	setTimeout (function () {
+		send ('那我就开动啦~~')
+	}, 2500);
+});
+
 VERSION_INFO = "v1.3.1 Project\n  ~ Jixun Bot ~\n二次开发: Jixun";
 
 regCommand(['about', 'version', '关于', '版本'], '查询机器人版本', function (args, cmd, send, msg) {

@@ -154,8 +154,13 @@ QQBot = (function () {
 				callback(true, e);
 				return ;
 			}
-			if (noMoreRetry) return;
-			_that.update_group_member (options, callback, true);
+			if (noMoreRetry && noMoreRetry >= 3)
+				return callback(false, e);
+
+			noMoreRetry = noMoreRetry ? noMoreRetry + 1 : 1
+			console.log ('Retry: %s/3', noMoreRetry)
+
+			_that.update_group_member (options, callback, noMoreRetry);
 		});
 	};
 	QQBot.prototype.update_all_group_member = function (callback) {

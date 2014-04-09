@@ -97,12 +97,15 @@ function handleUrl (req, res, $_POST) {
 			url += '.html';
 		}
 	}
+	if (fs.lstatSync( './template/' + url ).isDirectory()) {
+		url = '/404.html';
+	}
 	console.log ('[INFO ] Request ' + url);
+	var $_G = {}, echo = function (a) {
+			res.write (a.toString());
+		};
 	function loadTemplate (url) {
-		var fc = fs.readFileSync ('./template' + url).toString(),
-			echo = function (a) {
-				res.write (a.toString());
-			}, $_G = {};
+		var fc = fs.readFileSync ('./template/' + url).toString();
 		res.write (fc.replace(/([\s\S]*?)<#([\s\S]+?)#>/g, function (a, html, tempCode) {
 			html && echo (html);
 			// console.log ('Execute code: ', tempCode);
