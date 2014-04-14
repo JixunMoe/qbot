@@ -1,3 +1,6 @@
+该项目现在已停止支援,请 转战[jjBot](https://github.com/JixunMoe/jjBot)。
+----
+
 QQBot 
 ------
 基于[xhan](https://github.com/xhan/qqbot)的 QQBot 项目改造
